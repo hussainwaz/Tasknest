@@ -1,0 +1,63 @@
+/* Coolors Exported Palette - https://coolors.co/607466-9a031e-13293d-fffbfe-a0eade */
+/* 
+--hookers-green: #607466ff;
+--carmine: #9a031eff;
+--prussian-blue: #13293dff;
+--snow: #fffbfeff;
+--tiffany-blue: #a0eadeff; */
+
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@import "tailwindcss";
+/* Ensures proper mobile viewport handling */
+@supports (height: 100dvh) {
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+}
+body{
+    background: #000000;
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    padding: 0;
+}
+#root{
+  height: 100%;
+}
+*{
+    box-sizing: border-box;
+}
+
+/* Custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #2e2e2e;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.5s ease-in-out;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;       /* hides the icon */
+  pointer-events: auto;  /* keeps it clickable */
+}
