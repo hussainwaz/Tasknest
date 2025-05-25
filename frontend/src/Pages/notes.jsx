@@ -101,6 +101,7 @@ export default function Notes() {
                         createdAt: new Date(data.note.createdAt), // Convert string to Date here
                     };
                     setNotes([newNoteFromServer, ...notes]);
+                    
                     setNewNoteContent("");
                     setNewNoteTitle("");
                     setIsCreatingNote(false);
