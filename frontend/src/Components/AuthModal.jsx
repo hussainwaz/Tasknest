@@ -25,7 +25,7 @@ export default function AuthModal({ mode, onClose, onSwitchMode }) {
       : '/users/login';
 
     try {
-      const res = await fetch(`http://localhost:1000${endpoint}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
