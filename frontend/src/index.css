@@ -61,3 +61,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0;       /* hides the icon */
   pointer-events: auto;  /* keeps it clickable */
 }
+@keyframes borderMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-border {
+  animation: borderMove 3s linear infinite;
+}
+

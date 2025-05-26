@@ -54,27 +54,40 @@ export default function HomePage() {
   };
 
   const [focusTimeLeft, setFocusTimeLeft] = useState(25 * 60);
-  const [totalFocusTime, setTotalFocusTime] = useState(25 * 60);
-  const getFocusTime = () => {
-    const minutes = Math.floor(focusTimeLeft / 60);
-    const seconds = focusTimeLeft % 60;
+  const [isFocusing, setIsFocusing] = useState(false);
 
-    const minStr = String(minutes).padStart(2, '0');
-    const secStr = String(seconds).padStart(2, '0');
-
-    return `${minStr} : ${secStr}`;
-  };
-  const minusSec = async () => {
-    setTimeout(() => {
-      setFocusTimeLeft(focusTimeLeft - 1)
-    }, 1000);
+  // Format the timer
+  const getFocusTime = (time) => {
+    const minutes = Math.floor(time / 60).toString().padStart(2, '0');
+    const seconds = (time % 60).toString().padStart(2, '0');
+    return `${minutes} : ${seconds}`;
   }
-  const [timer, setTimer] = useState(getFocusTime());
-  const startFocusSession = async () => {
-    while (true) {
-      await minusSec;
+
+  // Start the focus session
+  const startFocusSession = () => {
+    if (!isFocusing) {
+      setIsFocusing(true);
+    }
+    else{
+      setIsFocusing(false);
     }
   };
+
+  // Countdown logic
+  useEffect(() => {
+    let interval;
+    if (isFocusing && focusTimeLeft > 0) {
+      interval = setInterval(() => {
+        setFocusTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (focusTimeLeft === 0) {
+      clearInterval(interval);
+      setIsFocusing(false);
+      // You can trigger a notification or alert here
+    }
+
+    return () => clearInterval(interval);
+  }, [isFocusing, focusTimeLeft]);
 
 
   useEffect(() => {
@@ -132,6 +145,9 @@ export default function HomePage() {
     <>
       <div className="relative w-full h-full bg-black text-[#fffbfeff] flex flex-col">
         <div className="bg-[#121212] rounded-2xl flex-1 mx-1 mb-3  overflow-hidden flex flex-col">
+          { isFocusing && (
+            <div className='absolute inset-0 w-full h-full bg-black/50 z-3'></div>
+          )}
           {isGuest && warnignOpen && (
             <div className="bg-yellow-900/40 border border-yellow-500/30 text-yellow-200 p-3 px-6 w-full rounded-t-2xl text-sm shadow-md flex flex-row justify-between items-center ">
               <p><strong>Heads up!</strong> You're not logged in — your tasks and notes won’t be saved permanently. Log in to sync your progress.</p>
@@ -296,7 +312,7 @@ export default function HomePage() {
                         <span className="text-gray-400">done</span>
                       </div> */}
                     </div>
-                    
+
                     <div className='flex flex-col gap-2 w-full h-full justify-center'>
                       <div className='w-[100%] py-4 rounded-md bg-gray-500/30 animate-pulse'></div>
                       <div className='w-[60%] py-4 rounded-md bg-gray-500/30 animate-pulse'></div>
@@ -310,7 +326,7 @@ export default function HomePage() {
                       />
                     </div> */}
                   </div>
-                  <div className="bg-gray-900 p-5 rounded-xl border border-gray-800 duration-300 hover:border-red-500/40 shadow-lg hover:shadow-red-500/10 transition-all  group flex flex-col items-center justify-between bg-gradient-to-br from-gray-800/50 via-red-900/20 to-red-900/20">
+                  <div className={`bg-gray-900 z-5 p-5 rounded-xl border border-gray-800 duration-300 hover:border-red-500/40 shadow-lg hover:shadow-red-500/10 transition-all  group flex flex-col items-center justify-between bg-gradient-to-br from-gray-800/50 via-red-900/20 to-red-900/20 ${isFocusing?"scale-150 border-red-500/40":""}`}>
                     <div className="flex items-center gap-3 w-full">
                       <div className="bg-blue-900/30 p-3 rounded-full group-hover:bg-blue-900/50 transition-colors">
                         <span className="text-2xl">🎯</span>
@@ -320,24 +336,21 @@ export default function HomePage() {
                         <p className="text-sm text-gray-400">25-minute deep work session</p>
                       </div>
                     </div>
-                     <div className='flex flex-col gap-2 w-full h-full justify-center'>
-                       <div className='text-sm font-semibold text-white'>
-                        Comming Soon
-                      </div>
-                      <div className='w-[100%] py-3 rounded-md bg-gray-500/30 animate-pulse'></div>
-                      <div className='w-[60%] py-3 rounded-md bg-gray-500/30 animate-pulse'></div>
-                      <div className='w-[80%] py-3 rounded-md bg-gray-500/30 animate-pulse'></div>
-                    </div>
-                    {/* <div>
-                      <p className='text-2xl font-bold'>{timer}</p>
+                    <div>
+                      <p className='text-2xl font-bold'>{getFocusTime(focusTimeLeft)}</p>
                     </div>
                     <button
                       className="mt-3 w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-medium text-white transition-colors text-sm cursor-pointer"
-                      onClick={() => startFocusSession()} // Your focus mode function here
+                      onClick={() => startFocusSession()}
                     >
-                      Start Session
-                    </button> */}
-                    
+                      {isFocusing && (
+                        <span>Pause Session</span>
+                      )}
+                      {!isFocusing && (
+                        <span>Start Session</span>
+                      )}                      
+                    </button>
+
                   </div>
                 </div>
               </div>
