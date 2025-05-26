@@ -53,7 +53,7 @@ export default function HomePage() {
     }, 300);
   };
 
-  const [focusTimeLeft, setFocusTimeLeft] = useState(25 * 60);
+  const [focusTimeLeft, setFocusTimeLeft] = useState(2 * 1);
   const [isFocusing, setIsFocusing] = useState(false);
 
   // Format the timer
@@ -68,7 +68,7 @@ export default function HomePage() {
     if (!isFocusing) {
       setIsFocusing(true);
     }
-    else{
+    else {
       setIsFocusing(false);
     }
   };
@@ -83,7 +83,7 @@ export default function HomePage() {
     } else if (focusTimeLeft === 0) {
       clearInterval(interval);
       setIsFocusing(false);
-      // You can trigger a notification or alert here
+      setFocusTimeLeft(25 * 60);
     }
 
     return () => clearInterval(interval);
@@ -145,8 +145,8 @@ export default function HomePage() {
     <>
       <div className="relative w-full h-full bg-black text-[#fffbfeff] flex flex-col">
         <div className="bg-[#121212] rounded-2xl flex-1 mx-1 mb-3  overflow-hidden flex flex-col">
-          { isFocusing && (
-            <div className='absolute inset-0 w-full h-full bg-black/50 z-3'></div>
+          {isFocusing && (
+            <div className='fixed inset-0 z-10 bg-black/70 backdrop-blur-sm'></div>
           )}
           {isGuest && warnignOpen && (
             <div className="bg-yellow-900/40 border border-yellow-500/30 text-yellow-200 p-3 px-6 w-full rounded-t-2xl text-sm shadow-md flex flex-row justify-between items-center ">
@@ -187,6 +187,38 @@ export default function HomePage() {
               <div className="p-4 sm:p-6">
                 {/* First row of cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {/* Quick Actions Card */}
+                  <div className="flex flex-col gap-2 p-4 h-[200px] sm:h-[220px] bg-gray-900 rounded-xl border border-gray-800 hover:border-amber-500/40 transition-all duration-300 bg-gradient-to-br from-gray-900/80 via-amber-900/10 to-amber-900/20 shadow-lg hover:shadow-amber-500/10 group">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-xl sm:text-2xl font-semibold text-white flex items-center gap-2">
+                        <Plus className="h-5 w-5 text-amber-400" />
+                        Quick Actions
+                      </h2>
+                      <div className="px-2 py-1 bg-gray-800/50 rounded-full text-xs flex items-center gap-1">
+                        <span className="text-amber-400 font-medium">2</span>
+                        <span className="text-gray-400">actions</span>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex-1 flex flex-col justify-center gap-3">
+                      <button
+                        onClick={() => navigate('/tasks')} // Replace with your actual task creation route
+                        className="flex items-center gap-2 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors border border-gray-700 hover:border-amber-400/30 group-hover:border-amber-400/20 cursor-pointer"
+                      >
+                        <ClipboardList className="h-4 w-4 text-amber-400" />
+                        <span className="text-sm font-medium">Add New Task</span>
+                      </button>
+
+                      <button
+                        onClick={() => navigate('/notes')} // Replace with your actual note creation route
+                        className="flex items-center gap-2 w-full p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors border border-gray-700 hover:border-amber-400/30 group-hover:border-amber-400/20 cursor-pointer"
+                      >
+                        <NotebookPen className="h-4 w-4 text-amber-400" />
+                        <span className="text-sm font-medium">Add New Note</span>
+                      </button>
+                    </div>
+                  </div>
                   {/* Today's Tasks Card */}
                   <div className="flex flex-col gap-2 p-4 h-[200px] sm:h-[220px] bg-gray-900 rounded-xl relative border border-gray-800 hover:border-blue-500/40 transition-all duration-300 cursor-pointer bg-gradient-to-br from-gray-900/80 via-blue-900/10 to-blue-900/20 shadow-lg hover:shadow-blue-500/10 group"
                     onClick={() => navigate('/tasks')
@@ -326,7 +358,7 @@ export default function HomePage() {
                       />
                     </div> */}
                   </div>
-                  <div className={`bg-gray-900 z-5 p-5 rounded-xl border border-gray-800 duration-300 hover:border-red-500/40 shadow-lg hover:shadow-red-500/10 transition-all  group flex flex-col items-center justify-between bg-gradient-to-br from-gray-800/50 via-red-900/20 to-red-900/20 ${isFocusing?"scale-150 border-red-500/40":""}`}>
+                  <div className={`bg-gray-900 z-5 p-5 rounded-xl border border-gray-800 duration-300 hover:border-red-500/40 shadow-lg hover:shadow-red-500/10 transition-all  group flex flex-col items-center justify-between bg-gradient-to-br from-gray-800/50 via-red-900/20 to-red-900/20 ${isFocusing ? "border-red-500/60 shadow-lg shadow-red-500/20 z-20" : ""}`}>
                     <div className="flex items-center gap-3 w-full">
                       <div className="bg-blue-900/30 p-3 rounded-full group-hover:bg-blue-900/50 transition-colors">
                         <span className="text-2xl">🎯</span>
@@ -348,7 +380,7 @@ export default function HomePage() {
                       )}
                       {!isFocusing && (
                         <span>Start Session</span>
-                      )}                      
+                      )}
                     </button>
 
                   </div>
