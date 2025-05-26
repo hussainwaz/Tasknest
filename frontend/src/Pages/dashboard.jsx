@@ -53,7 +53,7 @@ export default function HomePage() {
     }, 300);
   };
 
-  const [focusTimeLeft, setFocusTimeLeft] = useState(2 * 1);
+  const [focusTimeLeft, setFocusTimeLeft] = useState(25 * 60);
   const [isFocusing, setIsFocusing] = useState(false);
 
   // Format the timer
