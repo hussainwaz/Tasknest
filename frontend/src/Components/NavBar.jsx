@@ -1,56 +1,56 @@
 import React, { useEffect, useState } from "react";
-import { LogIn, LogOut, Menu, Search, UserRoundPlus } from "lucide-react"
+import { LogIn, LogOut, Menu, Search, UserRoundPlus } from "lucide-react";
 import AuthModal from "./AuthModal";
+import { useData } from "../DataContext"; // Import the context
+
 export default function NavBar({ menuToggle, isItMobile }) {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [authMode, setAuthMode] = useState('signin');
+    
+    // Get user state from context instead of local state
+    const { userId, isGuest, setIsGuest, setUserId } = useData();
 
     const handleAuthClick = (mode) => {
         setAuthMode(mode);
         setShowAuthModal(true);
     };
-    const [userId, setUserId] = useState(null);
-    const [isGuest, setIsGuest] = useState(false);
 
-useEffect(() => {
-    const checkAuth = () => {
-        const user_id = localStorage.getItem("user_id");
-        if (user_id) {
-            setUserId(user_id);
-            setIsGuest(false);
-        } else {
-            setIsGuest(true);
-            setUserId(null);
-        }
-    };
+    useEffect(() => {
+        const checkAuth = () => {
+            const user_id = localStorage.getItem("user_id");
+            if (user_id) {
+                setUserId(user_id);
+                setIsGuest(false);
+            } else {
+                setIsGuest(true);
+                setUserId(null);
+            }
+        };
 
-    checkAuth(); // initial check
+        checkAuth(); // initial check
 
-    window.addEventListener("userLoggedIn", checkAuth);
-    return () => {
-        window.removeEventListener("userLoggedIn", checkAuth);
-    };
-}, []);
+        window.addEventListener("userLoggedIn", checkAuth);
+        return () => {
+            window.removeEventListener("userLoggedIn", checkAuth);
+        };
+    }, [setUserId, setIsGuest]); // Add context setters to dependencies
 
     const handleLogout = () => {
-    localStorage.removeItem('user_id');
-    setUserId(null);
-    setIsGuest(true);
-    window.dispatchEvent(new Event("userLoggedOut")); // optional
-}
+        localStorage.removeItem('user_id');
+        setUserId(null);
+        setIsGuest(true);
+        window.dispatchEvent(new Event("userLoggedOut"));
+    };
 
     return (
         <>
             <div className="h-[10vh] w-full py-4 md:h-[10vh] bg-[#000000] text-white">
                 <div className="w-full h-full flex justify-between md:justify-end items-center px-4 md:px-11 gap-3">
-                    <div className="cursor-pointer md:hidden"
-                        onClick={menuToggle}
-                    >
+                    <div className="cursor-pointer md:hidden" onClick={menuToggle}>
                         <Menu className="scale-125" />
                     </div>
 
-                    <div className="cursor-pointer md:hidden"
-                    >
+                    <div className="cursor-pointer md:hidden">
                         <img src="/logo.svg" alt="" width={170} className="hover:scale-105 cursor-pointer transition-all duration-500" />
                     </div>
 
@@ -80,6 +80,7 @@ useEffect(() => {
                     </div>
                 </div>
             </div>
+            
             {/* Auth Modal */}
             {showAuthModal && (
                 <AuthModal
@@ -90,4 +91,4 @@ useEffect(() => {
             )}
         </>
     )
-};
+}

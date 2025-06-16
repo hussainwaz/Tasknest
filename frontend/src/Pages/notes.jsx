@@ -1,19 +1,24 @@
 import { Plus, Search, Trash2, Pin, MoreVertical, NotepadText, Key } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import NoteCard from "../Components/NoteCard";
+import { useData } from '../DataContext';
+
 export default function Notes() {
-    const [notes, setNotes] = useState([]);
-    const [userId, setUserId] = useState(null);
-    const [isGuest, setIsGuest] = useState(false);
+    const { notes, setNotes, userId, isGuest, fetchUserData } = useData();
     const API = import.meta.env.VITE_API_URL;
+
+    // Local UI state
+    const [searchQuery, setSearchQuery] = useState("");
+    const [newNoteContent, setNewNoteContent] = useState("");
+    const [isCreatingNote, setIsCreatingNote] = useState(false);
+    const [newNoteTitle, setNewNoteTitle] = useState("");
+
+    // Fetch notes when userId changes (on login)
     useEffect(() => {
         const fetchNotes = async () => {
-            const user_id = localStorage.getItem("user_id");
-            if (user_id) {
-                setUserId(user_id);
-                setIsGuest(false);
+            if (userId) {
                 try {
-                    const res = await fetch(`${API}/notes/${user_id}`);
+                    const res = await fetch(`${API}/notes/${userId}`);
                     const data = await res.json();
                     const mappedNotes = data.map(note => ({
                         id: note.id,
@@ -26,19 +31,11 @@ export default function Notes() {
                 } catch (err) {
                     console.error("Error fetching notes:", err);
                 }
-            } else {
-                setIsGuest(true);
-                setUserId(null);
             }
         };
 
         fetchNotes();
-    }, []);
-
-    const [searchQuery, setSearchQuery] = useState("");
-    const [newNoteContent, setNewNoteContent] = useState("");
-    const [isCreatingNote, setIsCreatingNote] = useState(false);
-    const [newNoteTitle, setNewNoteTitle] = useState("");
+    }, [userId, API, setNotes]);
 
     // Filter notes based on search
     const filteredNotes = notes.filter(note => {
@@ -48,26 +45,65 @@ export default function Notes() {
             (note.title && note.title.toLowerCase().includes(searchLower))
         );
     });
-    // Format date
+
+    // Format date (already fixed)
     const formatDate = (date) => {
+        if (!date) return "Just now";
         const now = new Date();
-        const diff = now - date;
+        const dateObj = date instanceof Date ? date : new Date(date);
+        const diff = now - dateObj;
+
+        if (isNaN(diff)) return "Just now";
 
         if (diff < 60000) return "Just now";
         if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
         if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-        return date.toLocaleDateString();
+        return dateObj.toLocaleDateString();
     };
+
     // Delete note
-    const deleteNote = (id) => {
-        setNotes(notes.filter(note => note.id !== id));
+    const deleteNote = async (id) => {
+        if (isGuest) {
+            setNotes(notes.filter(note => note.id !== id));
+        } else {
+            try {
+                const res = await fetch(`${API}/notes/${id}`, {
+                    method: "DELETE",
+                });
+                if (res.ok) {
+                    setNotes(notes.filter(note => note.id !== id));
+                }
+            } catch (err) {
+                console.error("Error deleting note:", err);
+            }
+        }
     };
+
     // Toggle pin status
-    const togglePin = (id) => {
-        setNotes(notes.map(note =>
+    const togglePin = async (id) => {
+        const updatedNotes = notes.map(note =>
             note.id === id ? { ...note, pinned: !note.pinned } : note
-        ));
+        );
+        
+        if (isGuest) {
+            setNotes(updatedNotes);
+        } else {
+            try {
+                const noteToUpdate = updatedNotes.find(note => note.id === id);
+                const res = await fetch(`${API}/notes/${id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ is_pinned: noteToUpdate.pinned }),
+                });
+                if (res.ok) {
+                    setNotes(updatedNotes);
+                }
+            } catch (err) {
+                console.error("Error updating note:", err);
+            }
+        }
     };
+
     // Create new note
     const createNote = async () => {
         if (!newNoteContent.trim() && !newNoteTitle.trim()) return;
@@ -101,7 +137,7 @@ export default function Notes() {
                         createdAt: new Date(data.note.createdAt), // Convert string to Date here
                     };
                     setNotes([newNoteFromServer, ...notes]);
-                    
+
                     setNewNoteContent("");
                     setNewNoteTitle("");
                     setIsCreatingNote(false);

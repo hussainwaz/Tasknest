@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Plus, ChevronDown, ChevronUp, Filter, Search, ListTodo, Calendar, Flag, Star, Check, MoreVertical, X, Tags, Goal, CalendarDaysIcon, CalendarDays, Tag } from "lucide-react";
+import { useData } from '../DataContext';
 
 export default function Tasks() {
-    const [tasks, setTasks] = useState([]);
+    const { tasks, setTasks, userId, isGuest, fetchUserData } = useData();
+    const API = import.meta.env.VITE_API_URL;
+    
+    // Local UI state
     const [newTaskTitle, setNewTaskTitle] = useState("");
     const [newTaskDueDate, setNewTaskDueDate] = useState(
         new Date().toISOString().split("T")[0]
@@ -14,13 +18,35 @@ export default function Tasks() {
     const [filter, setFilter] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [expandedTask, setExpandedTask] = useState(null);
-    // Sample tasks data
+
+    // Fetch tasks when userId changes (on login)
     useEffect(() => {
-        const sampleTasks = [
-           
-        ];
-        setTasks(sampleTasks);
-    }, []);
+        const fetchTasks = async () => {
+            if (userId) {
+                try {
+                    const res = await fetch(`${API}/tasks/${userId}`);
+                    const data = await res.json();
+                    setTasks(data);
+                } catch (err) {
+                    console.error("Error fetching tasks:", err);
+                }
+            }
+        };
+
+        fetchTasks();
+    }, [userId, API, setTasks]);
+
+    // Listen for logout events to clear tasks
+    useEffect(() => {
+        const handleLogout = () => {
+            setTasks([]); // Clear tasks on logout
+        };
+
+        window.addEventListener("userLoggedOut", handleLogout);
+        return () => {
+            window.removeEventListener("userLoggedOut", handleLogout);
+        };
+    }, [setTasks]);
 
     const filteredTasks = tasks.filter(task => {
         const matchesFilter =
@@ -33,31 +59,85 @@ export default function Tasks() {
         return matchesFilter && matchesSearch;
     });
 
-    const toggleTaskCompletion = (taskId) => {
-        setTasks(tasks.map(task =>
+    const toggleTaskCompletion = async (taskId) => {
+        const updatedTasks = tasks.map(task =>
             task.id === taskId ? { ...task, completed: !task.completed } : task
-        ));
-    };
-    const addNewTask = () => {
-        if (newTaskTitle.trim()) {
-            const newTask = {
-                id: 34,
-                title: newTaskTitle,
-                completed: false,
-                priority: newTaskPriority,
-                dueDate: newTaskDueDate,
-                creationDate: new Date(),
-                description: newTaskDescription,
-                category: newTaskCategory
-            };
-            setTasks([...tasks, newTask]);
-            setNewTaskTitle("");
-            setIsAddingTask(false);
+        );
+
+        if (isGuest) {
+            setTasks(updatedTasks);
+        } else {
+            try {
+                const taskToUpdate = updatedTasks.find(task => task.id === taskId);
+                const res = await fetch(`${API}/tasks/${taskId}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ completed: taskToUpdate.completed }),
+                });
+                if (res.ok) {
+                    setTasks(updatedTasks);
+                }
+            } catch (err) {
+                console.error("Error updating task:", err);
+            }
         }
     };
-    const deleteTask = (taskId) => {
-        setTasks(tasks.filter(task => task.id !== taskId));
+
+    const addNewTask = async () => {
+        if (!newTaskTitle.trim()) return;
+
+        const newTask = {
+            id: Date.now(),
+            title: newTaskTitle,
+            completed: false,
+            priority: newTaskPriority,
+            dueDate: newTaskDueDate,
+            creationDate: new Date(),
+            description: newTaskDescription,
+            category: newTaskCategory,
+            is_pinned: false
+        };
+
+        if (isGuest) {
+            setTasks([...tasks, newTask]);
+        } else {
+            try {
+                const res = await fetch(`${API}/tasks`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...newTask, user_id: userId }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    setTasks([...tasks, data.task]);
+                }
+            } catch (err) {
+                console.error("Error creating task:", err);
+            }
+        }
+
+        setNewTaskTitle("");
+        setNewTaskDescription("");
+        setIsAddingTask(false);
     };
+
+    const deleteTask = async (taskId) => {
+        if (isGuest) {
+            setTasks(tasks.filter(task => task.id !== taskId));
+        } else {
+            try {
+                const res = await fetch(`${API}/tasks/${taskId}`, {
+                    method: "DELETE",
+                });
+                if (res.ok) {
+                    setTasks(tasks.filter(task => task.id !== taskId));
+                }
+            } catch (err) {
+                console.error("Error deleting task:", err);
+            }
+        }
+    };
+
     return (
         <div className="relative w-full h-full bg-black text-[#fffbfeff] flex flex-col">
             <div className="bg-[#121212] rounded-2xl flex-1 mx-1 mb-3  overflow-hidden flex flex-col">

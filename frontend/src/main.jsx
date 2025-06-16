@@ -6,9 +6,10 @@ import './index.css'
 import Layout from './Layouts/layout.jsx';
 import Dashboard from './Pages/dashboard.jsx';
 import Notes from './Pages/notes.jsx';
- import Tasks from './Pages/tasks.jsx';
+import Tasks from './Pages/tasks.jsx';
 import Settings from './Pages/settings.jsx';
 import ErrorBoundary from './Pages/ErrorBoundary.jsx';
+import { DataProvider } from './DataContext'; // Import the DataProvider
 
 const router = createBrowserRouter([
   {
@@ -23,8 +24,11 @@ const router = createBrowserRouter([
     ]
   }
 ])
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router = {router}/>
+    <DataProvider> {/* Wrap RouterProvider with DataProvider */}
+      <RouterProvider router={router} />
+    </DataProvider>
   </StrictMode>,
 )
