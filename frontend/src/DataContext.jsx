@@ -1,6 +1,49 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const DataContext = createContext();
+
+const normaliseNote = (note) => {
+  if (!note) return null;
+
+  const createdValue = note.creationDate ?? note.creation_date ?? note.createdAt;
+  const createdAt = createdValue ? new Date(createdValue).toISOString() : new Date().toISOString();
+  const pinnedValue = Boolean(note.isPinned ?? note.is_pinned ?? note.pinned);
+
+  return {
+    id: note.id,
+    title: note.title ?? '',
+    content: note.content ?? '',
+    createdAt,
+    creationDate: createdAt,
+    isPinned: pinnedValue,
+    pinned: pinnedValue,
+    userId: note.userId ?? note.user_id ?? null,
+  };
+};
+
+const normaliseTask = (task) => {
+  if (!task) return null;
+
+  const creationValue = task.creationDate ?? task.creation_date ?? task.createdAt;
+  const dueValue = task.dueDate ?? task.due_date ?? task.due;
+  const createdAt = creationValue ? new Date(creationValue).toISOString() : new Date().toISOString();
+  const dueDate = dueValue ? new Date(dueValue).toISOString() : null;
+  const pinnedValue = Boolean(task.isPinned ?? task.is_pinned ?? task.pinned);
+
+  return {
+    id: task.id,
+    title: task.title ?? '',
+    description: task.description ?? '',
+    creationDate: createdAt,
+    dueDate,
+    completed: Boolean(task.completed),
+    isPinned: pinnedValue,
+    pinned: pinnedValue,
+    priority: task.priority ?? 'Medium',
+    category: task.category ?? 'Personal',
+    userId: task.userId ?? task.user_id ?? null,
+  };
+};
 
 export const DataProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
@@ -9,51 +52,49 @@ export const DataProvider = ({ children }) => {
   const [isGuest, setIsGuest] = useState(false);
   const API = import.meta.env.VITE_API_URL;
 
-  // In DataContext.jsx, modify the fetchUserData function:
-const fetchUserData = async (id) => {
-  try {
-    const resNotes = await fetch(`${API}/notes/${id}`);
-    const notesData = await resNotes.json();
+  const fetchUserData = useCallback(async (id) => {
+    if (!id) return;
 
-    const resTasks = await fetch(`${API}/tasks/${id}`);
-    const tasksData = await resTasks.json();
+    try {
+      const [resNotes, resTasks] = await Promise.all([
+        fetch(`${API}/notes/${id}`),
+        fetch(`${API}/tasks/${id}`),
+      ]);
 
-    // Ensure createdAt is properly formatted for notes
-    const formattedNotes = notesData.map(note => ({
-      ...note,
-      createdAt: note.createdAt ? new Date(note.createdAt) : new Date(),
-      pinned: note.is_pinned || false
-    }));
+      const notesData = await resNotes.json();
+      const tasksData = await resTasks.json();
 
-    setNotes(formattedNotes);
-    setTasks(tasksData);
-  } catch (err) {
-    console.error("Error fetching user data:", err);
-  }
-};
+      setNotes(Array.isArray(notesData) ? notesData.map(normaliseNote).filter(Boolean) : []);
+      setTasks(Array.isArray(tasksData) ? tasksData.map(normaliseTask).filter(Boolean) : []);
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+    }
+  }, [API]);
 
   useEffect(() => {
-    const user_id = localStorage.getItem("user_id");
-    if (user_id) {
-      setUserId(user_id);
-      fetchUserData(user_id);
+    const storedUserId = localStorage.getItem('user_id');
+    if (storedUserId) {
+      setUserId(storedUserId);
       setIsGuest(false);
+      fetchUserData(storedUserId);
     } else {
       setIsGuest(true);
     }
-  }, []);
+  }, [fetchUserData]);
 
- return (
-    <DataContext.Provider value={{ 
-      tasks, 
-      notes, 
-      setTasks, 
-      setNotes, 
-      userId, 
-      setUserId, // Make sure to expose setUserId
+  return (
+    <DataContext.Provider value={{
+      tasks,
+      notes,
+      setTasks,
+      setNotes,
+      userId,
+      setUserId,
       isGuest,
-      setIsGuest, // Make sure to expose setIsGuest
-      fetchUserData
+      setIsGuest,
+      fetchUserData,
+      normaliseNote,
+      normaliseTask,
     }}>
       {children}
     </DataContext.Provider>
